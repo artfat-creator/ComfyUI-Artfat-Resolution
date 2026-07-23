@@ -6,9 +6,14 @@ A tiny, **elastic** resolution picker for ComfyUI built for **low-base + upscale
 
 No canvas, no dozen buttons — clean controls and a real-time readout.
 
+![Artfat Resolution node](images/full-node.png)
+
 ## Node: **Artfat Resolution**
 
 ### Three modes (one `size` dropdown)
+
+![size dropdown](images/size-dropdown.png)
+
 - **Preset size** — pick a ready `W×H` (e.g. `2:3 portrait · 512×768`). Beginner-friendly.
 - **Custom ratio** — set `ratio_w:ratio_h` + `base` short side (e.g. `3:1` banners).
 - **Manual W×H** — type an **exact** `manual_w` / `manual_h`. **Not snapped** — exact stays exact (e.g. `1200×400`).
@@ -20,7 +25,9 @@ No canvas, no dozen buttons — clean controls and a real-time readout.
 ### Other inputs
 - `multiple` — snap sides to **8 / 16 / 32 / 64** (16/32 safe for Krea 2 / Qwen). Ignored for the exact side in Manual mode.
 - `batch_size` — for the `LATENT` output.
-- `latent_type` — `SD3 / Flux / Krea 2 (16ch)` or `SD1.5 / SDXL (4ch)`.
+- `latent_type` — `SD3 / Flux / Krea 2 (16ch)` or `SD1.5 / SDXL (4ch)`. Only matters if you use the `latent` output — match it to your model.
+
+![latent types](images/latent-types.png)
 
 ### Outputs
 `width`, `height`, `mid_width`, `mid_height`, `final_width`, `final_height` (`INT`), plus a ready
