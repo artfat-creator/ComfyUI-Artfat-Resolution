@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-artfat-resolution"
-description = "Tiny aspect-ratio resolution picker: base (small) width/height snapped to a multiple of 32, plus the final upscaled size. Built for low-base + upscale workflows (Krea 2 / Selfism)."
-version = "1.0.0"
+description = "Resolution picker for low-base + upscale workflows: preset sizes, custom ratio or exact manual W×H, two upscale stages (base → mid → final), plus an empty LATENT and a live readout. Built for Krea 2 / Selfism."
+version = "2.0.0"
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.9"
