@@ -37,16 +37,19 @@ No canvas, no dozen buttons — clean controls and a real-time readout.
 The node also draws the `base → mid → final` chain live at the bottom.
 
 ## Install
-**ComfyUI-Manager → Install via Git URL:**
+
+**Option 1 — ComfyUI-Manager (easiest)**
+`Custom Nodes Manager → Install via Git URL →`
 `https://github.com/artfat-creator/ComfyUI-Artfat-Resolution`
 
-Or clone into `ComfyUI/custom_nodes/` and restart ComfyUI:
-```
-cd <ComfyUI>/custom_nodes
+**Option 2 — git clone**
+```bash
+cd ComfyUI/custom_nodes
 git clone https://github.com/artfat-creator/ComfyUI-Artfat-Resolution.git
 ```
+Then **restart ComfyUI** (a browser refresh is not enough — the node registers on server start).
 
-No extra Python dependencies (uses `torch`, already provided by ComfyUI).
+No extra Python dependencies — uses `torch`, already provided by ComfyUI.
 
 ## License
 MIT © artfat-creator
