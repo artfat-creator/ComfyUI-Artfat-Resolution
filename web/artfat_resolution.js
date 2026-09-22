@@ -12,11 +12,37 @@ const SIZES = {
     "16:9 wide · 832×480": [832, 480],
 };
 const CUSTOM_RATIO = "Custom ratio";
+const MEGAPIXELS = "Megapixels · aspect";
 const MANUAL = "Manual W×H";
+
+// Mirrors ArtfatResolution.ASPECTS. null => fall back to ratio_w:ratio_h.
+const ASPECTS = {
+    "9:16 portrait": [9, 16],
+    "2:3 portrait": [2, 3],
+    "3:4 portrait": [3, 4],
+    "4:5 portrait": [4, 5],
+    "1:1 square": [1, 1],
+    "5:4 landscape": [5, 4],
+    "4:3 landscape": [4, 3],
+    "3:2 landscape": [3, 2],
+    "16:9 landscape": [16, 9],
+    "21:9 ultrawide": [21, 9],
+    "custom (ratio_w:ratio_h)": null,
+};
 
 function snap(x, m) {
     m = parseInt(m) || 32;
-    return Math.max(m, Math.round(x / m) * m);
+    // Python's round() breaks .5 ties to EVEN, Math.round() breaks them up:
+    // 1680/32 = 52.5 -> Python 52 (1664), Math.round 53 (1696). Match Python,
+    // otherwise the live readout disagrees with what the node actually returns.
+    const q = x / m;
+    const fl = Math.floor(q);
+    const frac = q - fl;
+    let n;
+    if (frac > 0.5) n = fl + 1;
+    else if (frac < 0.5) n = fl;
+    else n = fl % 2 === 0 ? fl : fl + 1;
+    return Math.max(m, n * m);
 }
 
 function stage(dim, up, m) {
@@ -46,6 +72,15 @@ function calc(node) {
         const long = snap((base * Math.max(rw, rh)) / Math.min(rw, rh), m);
         w = rw <= rh ? short : long;
         h = rw <= rh ? long : short;
+    } else if (size === MEGAPIXELS) {
+        // ASPECTS[...] is null for "custom" and undefined for an unknown label:
+        // both fall back to ratio_w:ratio_h, same as ASPECTS.get() in Python.
+        const ar = ASPECTS[V("mp_aspect")];
+        const aw = ar ? ar[0] : Math.max(1, parseInt(V("ratio_w")) || 1);
+        const ah = ar ? ar[1] : Math.max(1, parseInt(V("ratio_h")) || 1);
+        const total = Math.max(0.01, parseFloat(V("megapixels")) || 1.0) * 1e6;
+        w = snap(Math.sqrt((total * aw) / ah), m);
+        h = snap(Math.sqrt((total * ah) / aw), m);
     } else {
         const s = SIZES[size];
         if (!s) return null;
