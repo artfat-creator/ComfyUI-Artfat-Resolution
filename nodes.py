@@ -199,5 +199,50 @@ class ArtfatResolution:
         return (width, height, out_image, out_mask, latent, info)
 
 
-NODE_CLASS_MAPPINGS = {"ArtfatResolution": ArtfatResolution}
-NODE_DISPLAY_NAME_MAPPINGS = {"ArtfatResolution": "Artfat Resolution"}
+class ArtfatUpscaleChain:
+    """Two-stage upscale plan from one place: a latent upscale between two samplers, then an
+    image upscaler. Both multipliers live here, so changing one updates the whole chain."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "width": ("INT", {"forceInput": True, "tooltip": "Base width (from Artfat Resolution)."}),
+                "height": ("INT", {"forceInput": True, "tooltip": "Base height (from Artfat Resolution)."}),
+                "mid_scale": ("FLOAT", {
+                    "default": 1.5, "min": 1.0, "max": 8.0, "step": 0.05,
+                    "tooltip": "Latent upscale between the two samplers. Wire mid_scale into the "
+                               "latent upscaler's scale (SesquiLSR works from 1.0 to 2.0).",
+                }),
+                "final_scale": ("FLOAT", {
+                    "default": 1.5, "min": 1.0, "max": 8.0, "step": 0.05,
+                    "tooltip": "Image upscale after decoding, on top of mid_scale.",
+                }),
+                "multiple": (["2", "8", "16", "32"], {
+                    "default": "16",
+                    "tooltip": "Snap the sizes to a multiple. Even sizes are required by SeedVR2.",
+                }),
+            },
+        }
+
+    RETURN_TYPES = ("FLOAT", "INT")
+    RETURN_NAMES = ("mid_scale", "final_short")
+    OUTPUT_TOOLTIPS = (
+        "Into the latent upscaler's scale.",
+        "Short edge of the final image: into SeedVR2's `resolution` (it takes the short edge).",
+    )
+    FUNCTION = "plan"
+    CATEGORY = "artfat"
+
+    def plan(self, width, height, mid_scale, final_scale, multiple):
+        m = int(multiple)
+        snap = ArtfatResolution._snap
+        stage = lambda d, up: d if abs(up - 1.0) < 1e-6 else snap(d * up, m)
+        mid_w, mid_h = stage(int(width), mid_scale), stage(int(height), mid_scale)
+        final_w, final_h = stage(mid_w, final_scale), stage(mid_h, final_scale)
+        return (float(mid_scale), int(min(final_w, final_h)))
+
+
+NODE_CLASS_MAPPINGS = {"ArtfatResolution": ArtfatResolution, "ArtfatUpscaleChain": ArtfatUpscaleChain}
+NODE_DISPLAY_NAME_MAPPINGS = {"ArtfatResolution": "Artfat Resolution",
+                              "ArtfatUpscaleChain": "Artfat Upscale Chain"}

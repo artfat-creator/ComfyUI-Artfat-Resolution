@@ -92,6 +92,47 @@ function calc(node) {
     return { w, h, mw, mh, fw, fh };
 }
 
+// Base W×H for an Upscale Chain node, read live from the Artfat Resolution feeding its width.
+function upstreamBase(node) {
+    const inp = node.inputs && node.inputs.find((i) => i.name === "width");
+    const link = inp && inp.link != null && node.graph && node.graph.links[inp.link];
+    const src = link && node.graph.getNodeById(link.origin_id);
+    if (!src || src.type !== "ArtfatResolution") return null;
+    const r = calc(src);
+    return r ? [r.w, r.h] : null;
+}
+
+app.registerExtension({
+    name: "artfat.upscale_chain.live",
+    async beforeRegisterNodeDef(nodeType, nodeData) {
+        if (nodeData.name !== "ArtfatUpscaleChain") return;
+        const orig = nodeType.prototype.onDrawForeground;
+        nodeType.prototype.onDrawForeground = function (ctx) {
+            orig && orig.apply(this, arguments);
+            if (this.flags && this.flags.collapsed) return;
+            const base = upstreamBase(this);
+            if (!base) return;
+            const V = (n) => { const w = this.widgets && this.widgets.find((w) => w.name === n); return w ? w.value : undefined; };
+            const m = V("multiple") || "16";
+            const s1 = parseFloat(V("mid_scale")) || 1.0, s2 = parseFloat(V("final_scale")) || 1.0;
+            const mw = stage(base[0], s1, m), mh = stage(base[1], s1, m);
+            const fw = stage(mw, s2, m), fh = stage(mh, s2, m);
+            const lines = [["mid", `${mw} x ${mh}`, "#ffd27f"], ["final", `${fw} x ${fh}`, "#9ae69a"]];
+            ctx.save();
+            ctx.font = "12px monospace";
+            ctx.textAlign = "center";
+            const cx = this.size[0] / 2;
+            let y = this.size[1] - 8 - (lines.length - 1) * 14;
+            for (const [label, val, color] of lines) {
+                ctx.fillStyle = color;
+                ctx.fillText(`${label}  ${val}`, cx, y);
+                y += 14;
+            }
+            ctx.restore();
+        };
+    },
+});
+
 app.registerExtension({
     name: "artfat.resolution.live",
     async beforeRegisterNodeDef(nodeType, nodeData) {
